@@ -102,12 +102,10 @@ func (d *dbCreator) CreateDB(dbName string) error {
 func (d *dbCreator) createMetricsTable(table *tableDef) error {
 	var tagsObjectChildCols []string
 	for i, column := range table.tags {
-		if table.tagTypes[i] != "string" {
-			return fmt.Errorf("cratedb db creator does not support non-string tags")
-		}
+		pgType := serializedTypeToPgType(table.tagTypes[i])
 		tagsObjectChildCols = append(
 			tagsObjectChildCols,
-			fmt.Sprintf("%s %s", column, "string"))
+			fmt.Sprintf("%s %s", column, pgType))
 	}
 
 	var metricCols []string
@@ -143,8 +141,8 @@ func (d *dbCreator) createMetricsTable(table *tableDef) error {
 func (d *dbCreator) DBExists(dbName string) bool {
 	var exists bool
 	err := d.conn.QueryRow(context.Background(), `
-		SELECT count(table_name) > 0 
-		FROM information_schema.tables 
+		SELECT count(table_name) > 0
+		FROM information_schema.tables
 		WHERE table_schema = $1`, dbName,
 	).Scan(&exists)
 	if err != nil {
@@ -198,5 +196,22 @@ func (d *dbCreator) getTables(dbName string) ([]tableDef, error) {
 func (d *dbCreator) Close() {
 	if err := d.conn.Close(context.Background()); err != nil {
 		log.Printf("an error on connection closing: %v", err)
+	}
+}
+
+func serializedTypeToPgType(serializedType string) string {
+	switch serializedType {
+	case "string":
+		return "TEXT"
+	case "float32":
+		return "FLOAT"
+	case "float64":
+		return "DOUBLE PRECISION"
+	case "int64":
+		return "BIGINT"
+	case "int32":
+		return "INTEGER"
+	default:
+		panic(fmt.Sprintf("unrecognized type %s", serializedType))
 	}
 }
