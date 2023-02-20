@@ -32,11 +32,15 @@ func (s *Serializer) Serialize(p *data.Point, w io.Writer) error {
 	if len(tagKeys) > 0 {
 		buf = append(buf, '{')
 		for i, key := range tagKeys {
-			buf = append(buf, '"')
-			buf = append(buf, key...)
-			buf = append(buf, []byte("\":\"")...)
-			buf = serialize.FastFormatAppend(tagValues[i], buf)
-			buf = append(buf, []byte("\",")...)
+		    val := tagValues[i];
+		    if val == nil {
+		       continue
+		    }
+            buf = append(buf, '"')
+            buf = append(buf, key...)
+            buf = append(buf, []byte("\":\"")...)
+            buf = serialize.FastFormatAppend(val, buf)
+            buf = append(buf, []byte("\",")...)
 		}
 		buf = buf[:len(buf)-1]
 		buf = append(buf, '}')

@@ -86,7 +86,7 @@ func (d *fileDataSource) NextItem() data.LoadedPoint {
 
 	metrics, err := parseMetrics(strings.Split(parts[3], "\t"))
 	if err != nil {
-		fatal("cannot parse metrics: %v", err)
+		fatal("cannot parse metrics %s: %v", strings.Split(parts[3], "\t"), err)
 		return data.LoadedPoint{}
 	}
 
@@ -177,7 +177,11 @@ func parseTime(v string) (time.Time, error) {
 func parseMetrics(values []string) (row, error) {
 	metrics := make(row, len(values))
 	for i := range values {
-		metric, err := strconv.ParseFloat(values[i], 64)
+	    v := strings.TrimSpace(values[i])
+	    if (v == "") {
+	      continue
+	    }
+		metric, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			return nil, err
 		}
