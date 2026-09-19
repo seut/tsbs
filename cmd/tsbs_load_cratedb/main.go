@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"log"
 
@@ -77,9 +76,8 @@ func main() {
 	port := viper.GetUint("port")
 	user := viper.GetString("user")
 	pass := viper.GetString("pass")
+	numReplicas, numShards := crateDBStorageSettings(viper.GetViper())
 
-	numReplicas := flag.Int("replicas", 0, "Number of replicas per a metric table")
-	numShards := flag.Int("shards", 5, "Number of shards per a metric table")
 	config.HashWorkers = false
 	loader = load.GetBenchmarkRunner(config)
 
@@ -94,10 +92,14 @@ func main() {
 	loader.RunBenchmark(&benchmark{
 		dbc: &dbCreator{
 			cfg:         connConfig,
-			numReplicas: *numReplicas,
-			numShards:   *numShards,
+			numReplicas: numReplicas,
+			numShards:   numShards,
 			ds:          ds,
 		},
 		ds: ds,
 	})
+}
+
+func crateDBStorageSettings(v *viper.Viper) (numReplicas, numShards int) {
+	return v.GetInt("replicas"), v.GetInt("shards")
 }
